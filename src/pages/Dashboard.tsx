@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from '@/components/ui/task-card';
@@ -7,50 +7,99 @@ import { EnergyChart } from '@/components/dashboard/energy-chart';
 import { BreakReminder } from '@/components/dashboard/break-reminder';
 import { ProductivityStats } from '@/components/dashboard/productivity-stats';
 import { Plus, Calendar, Brain, Settings } from 'lucide-react';
-
-const mockTasks = [
-  {
-    id: '1',
-    title: 'Design system review',
-    duration: 45,
-    energyRequired: 'high' as const,
-    category: 'Design',
-    completed: false
-  },
-  {
-    id: '2',
-    title: 'Email responses',
-    duration: 20,
-    energyRequired: 'low' as const,
-    category: 'Communication',
-    completed: true
-  },
-  {
-    id: '3',
-    title: 'Project planning meeting',
-    duration: 60,
-    energyRequired: 'medium' as const,
-    category: 'Meeting',
-    completed: false
-  },
-  {
-    id: '4',
-    title: 'Code review',
-    duration: 30,
-    energyRequired: 'high' as const,
-    category: 'Development',
-    completed: false
-  }
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
+type Task = {
+  id: string;
+  title: string;
+  duration: number;
+  energyRequired: 'low' | 'medium' | 'high';
+  category: string;
+  completed?: boolean;
+};
 
 export default function Dashboard() {
-  const [tasks, setTasks] = useState(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   const currentEnergyLevel = 85;
 
-  const handleCompleteTask = (id: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, completed: true } : task
-    ));
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        await loadTasks(user.id);
+      }
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  const loadTasks = async (uid: string) => {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('id, title, duration, energy_required, category, completed')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false });
+    if (error) {
+      toast({ title: 'Failed to load tasks', description: error.message });
+      return;
+    }
+    const mapped = (data || []).map((t: any) => ({
+      id: t.id,
+      title: t.title,
+      duration: t.duration,
+      energyRequired: t.energy_required as 'low' | 'medium' | 'high',
+      category: t.category,
+      completed: t.completed,
+    }));
+    setTasks(mapped);
+  };
+
+  const handleCompleteTask = async (id: string) => {
+    if (!userId) return;
+    const { error } = await supabase
+      .from('tasks')
+      .update({ completed: true, completed_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('user_id', userId);
+    if (error) {
+      toast({ title: 'Could not complete task', description: error.message });
+      return;
+    }
+    setTasks(prev => prev.map(task => task.id === id ? { ...task, completed: true } : task));
+    toast({ title: 'Task completed' });
+  };
+
+  const addTask = async () => {
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        user_id: userId,
+        title: 'New Task',
+        duration: 30,
+        energy_required: 'medium',
+        category: 'General',
+      })
+      .select('id, title, duration, energy_required, category, completed')
+      .single();
+    if (error) {
+      toast({ title: 'Could not add task', description: error.message });
+      return;
+    }
+    const mapped: Task = {
+      id: data!.id,
+      title: data!.title,
+      duration: data!.duration,
+      energyRequired: data!.energy_required as 'low' | 'medium' | 'high',
+      category: data!.category,
+      completed: data!.completed,
+    };
+    setTasks(prev => [mapped, ...prev]);
+    toast({ title: 'Task added' });
   };
 
   return (
@@ -72,6 +121,16 @@ export default function Dashboard() {
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = '/auth';
+              }}
+            >
+              Sign out
+            </Button>
           </div>
         </div>
 
@@ -87,7 +146,7 @@ export default function Dashboard() {
                   <Calendar className="w-5 h-5 mr-2" />
                   Today's Optimized Schedule
                 </CardTitle>
-                <Button size="sm">
+                <Button size="sm" onClick={addTask}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Task
                 </Button>
