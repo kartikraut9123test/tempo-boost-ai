@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { TaskCard } from '@/components/ui/task-card';
+import { TaskForm } from '@/components/ui/task-form';
+import { UserProfileDropdown } from '@/components/ui/user-profile-dropdown';
 import { EnergyMeter } from '@/components/ui/energy-meter';
 import { EnergyChart } from '@/components/dashboard/energy-chart';
 import { BreakReminder } from '@/components/dashboard/break-reminder';
 import { ProductivityStats } from '@/components/dashboard/productivity-stats';
-import { Plus, Calendar, Brain, Settings } from 'lucide-react';
+import { Calendar, Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 type Task = {
@@ -73,16 +74,21 @@ export default function Dashboard() {
     toast({ title: 'Task completed' });
   };
 
-  const addTask = async () => {
+  const addTask = async (taskData: {
+    title: string;
+    category: string;
+    duration: number;
+    energyRequired: 'low' | 'medium' | 'high';
+  }) => {
     if (!userId) return;
     const { data, error } = await supabase
       .from('tasks')
       .insert({
         user_id: userId,
-        title: 'New Task',
-        duration: 30,
-        energy_required: 'medium',
-        category: 'General',
+        title: taskData.title,
+        duration: taskData.duration,
+        energy_required: taskData.energyRequired,
+        category: taskData.category,
       })
       .select('id, title, duration, energy_required, category, completed')
       .single();
@@ -99,7 +105,12 @@ export default function Dashboard() {
       completed: data!.completed,
     };
     setTasks(prev => [mapped, ...prev]);
-    toast({ title: 'Task added' });
+    toast({ title: 'Task added successfully!' });
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/auth';
   };
 
   return (
@@ -117,20 +128,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center space-x-3">
             <EnergyMeter level={currentEnergyLevel} />
-            <Button size="sm" variant="outline">
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                window.location.href = '/auth';
-              }}
-            >
-              Sign out
-            </Button>
+            <UserProfileDropdown onSignOut={handleSignOut} />
           </div>
         </div>
 
@@ -146,10 +144,7 @@ export default function Dashboard() {
                   <Calendar className="w-5 h-5 mr-2" />
                   Today's Optimized Schedule
                 </CardTitle>
-                <Button size="sm" onClick={addTask}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Task
-                </Button>
+                <TaskForm onSubmit={addTask} />
               </CardHeader>
               <CardContent className="space-y-3">
                 {tasks.map((task) => (
