@@ -15,9 +15,11 @@ interface UserProfile {
 
 interface UserProfileDropdownProps {
   onSignOut: () => void;
+  onShowUserInfo?: () => void;
+  onShowSettings?: () => void;
 }
 
-export function UserProfileDropdown({ onSignOut }: UserProfileDropdownProps) {
+export function UserProfileDropdown({ onSignOut, onShowUserInfo, onShowSettings }: UserProfileDropdownProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const { toast } = useToast();
@@ -100,11 +102,11 @@ export function UserProfileDropdown({ onSignOut }: UserProfileDropdownProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer">
+        <DropdownMenuItem className="cursor-pointer" onClick={() => onShowUserInfo?.()}>
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer">
+        <DropdownMenuItem className="cursor-pointer" onClick={() => onShowSettings?.()}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>

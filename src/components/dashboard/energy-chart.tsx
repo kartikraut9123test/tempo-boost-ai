@@ -18,9 +18,16 @@ const energyData = [
   { time: '8PM', energy: 45 },
 ];
 
-export function EnergyChart() {
+interface EnergyChartProps {
+  onChartClick?: () => void;
+}
+
+export function EnergyChart({ onChartClick }: EnergyChartProps) {
   return (
-    <div className="h-64 w-full">
+    <div 
+      className="h-64 w-full cursor-pointer hover:bg-muted/20 transition-colors duration-200 rounded-lg p-2"
+      onClick={onChartClick}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={energyData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />

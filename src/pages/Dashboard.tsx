@@ -7,6 +7,11 @@ import { EnergyMeter } from '@/components/ui/energy-meter';
 import { EnergyChart } from '@/components/dashboard/energy-chart';
 import { BreakReminder } from '@/components/dashboard/break-reminder';
 import { ProductivityStats } from '@/components/dashboard/productivity-stats';
+import { TaskCalendar } from '@/components/ui/task-calendar';
+import { StatsDetailDialog } from '@/components/ui/stats-detail-dialog';
+import { EnergyChartModal } from '@/components/ui/energy-chart-modal';
+import { UserInfoDialog } from '@/components/ui/user-info-dialog';
+import { SettingsDialog } from '@/components/ui/settings-dialog';
 import { Calendar, Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,6 +28,11 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [statsDialogOpen, setStatsDialogOpen] = useState(false);
+  const [selectedStatType, setSelectedStatType] = useState<'tasks' | 'energy' | 'focus' | 'trend' | null>(null);
+  const [energyChartModalOpen, setEnergyChartModalOpen] = useState(false);
+  const [userInfoDialogOpen, setUserInfoDialogOpen] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const { toast } = useToast();
   const currentEnergyLevel = 85;
 
@@ -113,6 +123,11 @@ export default function Dashboard() {
     window.location.href = '/auth';
   };
 
+  const handleStatClick = (statType: 'tasks' | 'energy' | 'focus' | 'trend') => {
+    setSelectedStatType(statType);
+    setStatsDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-6">
@@ -128,14 +143,18 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center space-x-3">
             <EnergyMeter level={currentEnergyLevel} />
-            <UserProfileDropdown onSignOut={handleSignOut} />
+            <UserProfileDropdown 
+              onSignOut={handleSignOut}
+              onShowUserInfo={() => setUserInfoDialogOpen(true)}
+              onShowSettings={() => setSettingsDialogOpen(true)}
+            />
           </div>
         </div>
 
         {/* Productivity Stats */}
-        <ProductivityStats />
+        <ProductivityStats onStatClick={handleStatClick} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Today's Schedule */}
           <div className="lg:col-span-2 space-y-4">
             <Card>
@@ -159,6 +178,11 @@ export default function Dashboard() {
             </Card>
           </div>
 
+          {/* Task Calendar */}
+          <div className="space-y-4">
+            <TaskCalendar tasks={tasks} />
+          </div>
+
           {/* Energy Analytics */}
           <div className="space-y-4">
             <Card>
@@ -169,7 +193,7 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <EnergyChart />
+                <EnergyChart onChartClick={() => setEnergyChartModalOpen(true)} />
               </CardContent>
             </Card>
 
@@ -200,6 +224,28 @@ export default function Dashboard() {
       </div>
 
       <BreakReminder />
+
+      {/* Dialogs */}
+      <StatsDetailDialog
+        isOpen={statsDialogOpen}
+        onClose={() => setStatsDialogOpen(false)}
+        statType={selectedStatType}
+      />
+      
+      <EnergyChartModal
+        isOpen={energyChartModalOpen}
+        onClose={() => setEnergyChartModalOpen(false)}
+      />
+      
+      <UserInfoDialog
+        isOpen={userInfoDialogOpen}
+        onClose={() => setUserInfoDialogOpen(false)}
+      />
+      
+      <SettingsDialog
+        isOpen={settingsDialogOpen}
+        onClose={() => setSettingsDialogOpen(false)}
+      />
     </div>
   );
 }

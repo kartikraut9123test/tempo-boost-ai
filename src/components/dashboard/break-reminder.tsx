@@ -36,12 +36,18 @@ export function BreakReminder() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // Check if alerts are enabled
+    const checkAlertsAndShow = () => {
+      const alertsEnabled = localStorage.getItem('alertsEnabled');
+      if (alertsEnabled !== 'false') {
+        const randomBreak = breakTypes[Math.floor(Math.random() * breakTypes.length)];
+        setCurrentBreak(randomBreak);
+        setIsVisible(true);
+      }
+    };
+
     // Simulate break reminders every 45 seconds for demo
-    const interval = setInterval(() => {
-      const randomBreak = breakTypes[Math.floor(Math.random() * breakTypes.length)];
-      setCurrentBreak(randomBreak);
-      setIsVisible(true);
-    }, 45000);
+    const interval = setInterval(checkAlertsAndShow, 45000);
 
     return () => clearInterval(interval);
   }, []);

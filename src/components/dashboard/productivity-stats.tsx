@@ -37,14 +37,27 @@ const stats = [
   }
 ];
 
-export function ProductivityStats() {
+interface ProductivityStatsProps {
+  onStatClick?: (statType: 'tasks' | 'energy' | 'focus' | 'trend') => void;
+}
+
+export function ProductivityStats({ onStatClick }: ProductivityStatsProps) {
+  const getStatType = (index: number): 'tasks' | 'energy' | 'focus' | 'trend' => {
+    const types: ('tasks' | 'energy' | 'focus' | 'trend')[] = ['tasks', 'energy', 'focus', 'trend'];
+    return types[index];
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => {
         const IconComponent = stat.icon;
         
         return (
-          <Card key={index} className="p-4 hover:shadow-primary transition-shadow duration-300">
+          <Card 
+            key={index} 
+            className="p-4 hover:shadow-primary transition-shadow duration-300 cursor-pointer hover:scale-105"
+            onClick={() => onStatClick?.(getStatType(index))}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className={`p-2 rounded-lg ${stat.bgColor}`}>
                 <IconComponent className={`w-5 h-5 ${stat.color}`} />
