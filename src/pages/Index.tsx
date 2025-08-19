@@ -71,7 +71,7 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
                   size="lg" 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/auth')}
                   className="text-lg px-8 py-4 bg-gradient-focus hover:shadow-glow transition-all duration-300"
                 >
                   Proceed
