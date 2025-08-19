@@ -191,7 +191,7 @@ const Index = () => {
             onClick={() => navigate('/dashboard')}
             className="text-lg px-12 py-4 bg-background text-foreground hover:bg-background/90 hover:shadow-2xl transition-all duration-300"
           >
-            Start Your Free Trial
+            Start Optimizing
             <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
         </div>
