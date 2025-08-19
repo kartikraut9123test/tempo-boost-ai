@@ -12,7 +12,7 @@ interface Task {
   energyRequired: 'low' | 'medium' | 'high';
   category: string;
   completed?: boolean;
-  scheduledFor?: Date;
+  scheduled_for?: string | null;
 }
 
 interface TaskCalendarProps {
@@ -22,16 +22,12 @@ interface TaskCalendarProps {
 export function TaskCalendar({ tasks }: TaskCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  // Mock scheduled tasks for demo
-  const scheduledTasks = tasks.map((task, index) => ({
-    ...task,
-    scheduledFor: addDays(new Date(), index % 7)
-  }));
-
   const getTasksForDate = (date: Date) => {
-    return scheduledTasks.filter(task => 
-      task.scheduledFor && isSameDay(task.scheduledFor, date)
-    );
+    return tasks.filter(task => {
+      if (!task.scheduled_for) return false;
+      const taskDate = new Date(task.scheduled_for);
+      return isSameDay(taskDate, date);
+    });
   };
 
   const selectedDateTasks = selectedDate ? getTasksForDate(selectedDate) : [];
@@ -87,6 +83,11 @@ export function TaskCalendar({ tasks }: TaskCalendarProps) {
                     <div className="flex items-center mt-1 text-sm text-muted-foreground">
                       <Clock className="w-3 h-3 mr-1" />
                       {task.duration} minutes • {task.category}
+                      {task.scheduled_for && (
+                        <span className="ml-2">
+                          • {format(new Date(task.scheduled_for), 'HH:mm')}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}

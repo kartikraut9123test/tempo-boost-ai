@@ -4,7 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Plus, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface TaskFormProps {
   onSubmit: (task: {
@@ -12,6 +16,7 @@ interface TaskFormProps {
     category: string;
     duration: number;
     energyRequired: 'low' | 'medium' | 'high';
+    scheduledFor?: Date;
   }) => void;
 }
 
@@ -21,16 +26,26 @@ export function TaskForm({ onSubmit }: TaskFormProps) {
   const [category, setCategory] = useState('');
   const [duration, setDuration] = useState(30);
   const [energyRequired, setEnergyRequired] = useState<'low' | 'medium' | 'high'>('medium');
+  const [scheduledDate, setScheduledDate] = useState<Date>();
+  const [scheduledTime, setScheduledTime] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !category.trim()) return;
     
+    let scheduledFor: Date | undefined;
+    if (scheduledDate && scheduledTime) {
+      const [hours, minutes] = scheduledTime.split(':').map(Number);
+      scheduledFor = new Date(scheduledDate);
+      scheduledFor.setHours(hours, minutes, 0, 0);
+    }
+    
     onSubmit({
       title: title.trim(),
       category: category.trim(),
       duration,
-      energyRequired
+      energyRequired,
+      scheduledFor
     });
     
     // Reset form
@@ -38,6 +53,8 @@ export function TaskForm({ onSubmit }: TaskFormProps) {
     setCategory('');
     setDuration(30);
     setEnergyRequired('medium');
+    setScheduledDate(undefined);
+    setScheduledTime('');
     setOpen(false);
   };
 
@@ -112,6 +129,47 @@ export function TaskForm({ onSubmit }: TaskFormProps) {
                 <SelectItem value="high">High Energy</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Schedule Date (Optional)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !scheduledDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {scheduledDate ? format(scheduledDate, "PPP") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={scheduledDate}
+                  onSelect={setScheduledDate}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="time">Schedule Time (Optional)</Label>
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <Input
+                id="time"
+                type="time"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+                className="flex-1"
+              />
+            </div>
           </div>
           
           <div className="flex justify-end space-x-2">

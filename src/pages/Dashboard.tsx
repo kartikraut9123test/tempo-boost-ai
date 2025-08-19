@@ -22,6 +22,7 @@ type Task = {
   energyRequired: 'low' | 'medium' | 'high';
   category: string;
   completed?: boolean;
+  scheduled_for?: string | null;
 };
 
 export default function Dashboard() {
@@ -51,7 +52,7 @@ export default function Dashboard() {
   const loadTasks = async (uid: string) => {
     const { data, error } = await supabase
       .from('tasks')
-      .select('id, title, duration, energy_required, category, completed')
+      .select('id, title, duration, energy_required, category, completed, scheduled_for')
       .eq('user_id', uid)
       .order('created_at', { ascending: false });
     if (error) {
@@ -65,6 +66,7 @@ export default function Dashboard() {
       energyRequired: t.energy_required as 'low' | 'medium' | 'high',
       category: t.category,
       completed: t.completed,
+      scheduled_for: t.scheduled_for,
     }));
     setTasks(mapped);
   };
@@ -89,6 +91,7 @@ export default function Dashboard() {
     category: string;
     duration: number;
     energyRequired: 'low' | 'medium' | 'high';
+    scheduledFor?: Date;
   }) => {
     if (!userId) return;
     const { data, error } = await supabase
@@ -99,8 +102,9 @@ export default function Dashboard() {
         duration: taskData.duration,
         energy_required: taskData.energyRequired,
         category: taskData.category,
+        scheduled_for: taskData.scheduledFor?.toISOString() || null,
       })
-      .select('id, title, duration, energy_required, category, completed')
+      .select('id, title, duration, energy_required, category, completed, scheduled_for')
       .single();
     if (error) {
       toast({ title: 'Could not add task', description: error.message });
@@ -113,6 +117,7 @@ export default function Dashboard() {
       energyRequired: data!.energy_required as 'low' | 'medium' | 'high',
       category: data!.category,
       completed: data!.completed,
+      scheduled_for: data!.scheduled_for,
     };
     setTasks(prev => [mapped, ...prev]);
     toast({ title: 'Task added successfully!' });
