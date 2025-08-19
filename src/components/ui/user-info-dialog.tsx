@@ -53,12 +53,13 @@ export function UserInfoDialog({ isOpen, onClose }: UserInfoDialogProps) {
         .single();
       
       if (data) {
-        setProfile(data);
+        const row = data as unknown as UserProfile;
+        setProfile(row);
         setFormData({
-          display_name: data.display_name || '',
-          bio: data.bio || '',
-          location: data.location || '',
-          job_title: data.job_title || ''
+          display_name: row.display_name || '',
+          bio: row.bio || '',
+          location: row.location || '',
+          job_title: row.job_title || ''
         });
       }
     }
