@@ -36,8 +36,7 @@ export function TaskForm({ onSubmit }: TaskFormProps) {
     let scheduledFor: Date | undefined;
     if (scheduledDate && scheduledTime) {
       const [hours, minutes] = scheduledTime.split(':').map(Number);
-      scheduledFor = new Date(scheduledDate);
-      scheduledFor.setHours(hours, minutes, 0, 0);
+      scheduledFor = new Date(scheduledDate.getFullYear(), scheduledDate.getMonth(), scheduledDate.getDate(), hours, minutes, 0, 0);
     }
     
     onSubmit({
